@@ -1,290 +1,227 @@
 # HS云盘 Git 协作管理手册
 
-> 仓库：https://github.com/little-ran/hs-cloud-disk（Private，邀请制）
+> 仓库：https://github.com/little-ran/hs-cloud-disk（Public，分支保护+PR审查）
 > 管理员：little-ran
 > 服务器：10.0.124.98:8088
 
 ---
 
-## 一、仓库说明
+## 一、核心规则
 
-| 项 | 内容 |
-|---|---|
-| 仓库地址 | https://github.com/little-ran/hs-cloud-disk |
-| 可见性 | Private（仅受邀协作者可见） |
-| 主分支 | main |
-| 存储内容 | HS云盘部署配置与定制代码（不含密码/数据） |
+**main 分支受保护，任何人不能直接 push。** 所有改动必须：
+1. 创建分支 → 2. 提交 Pull Request → 3. 至少1人审查通过 → 4. 合并到 main
 
-### 仓库结构
-
-```
-hs-cloud-disk/
-├── .gitignore                    # 忽略规则
-├── docker-compose.yml            # Docker 编排配置
-├── GIT-MANUAL.md                 # 本文档
-└── seafile-custom/               # 所有定制文件
-    ├── seafile.nginx.conf        # nginx 配置（含下载缓存修复）
-    ├── start.py                  # 容器启动脚本
-    ├── seahub_settings.py        # seahub 配置（安全/中间件/品牌）
-    ├── seafile.conf              # fileserver 配置
-    ├── react_app.html            # 前端入口模板
-    ├── sysadmin_react_app.html   # 管理后台模板
-    ├── seahub/templates/registration/login.html  # 登录页
-    ├── *.js                      # 前端注入脚本
-    ├── beautify.css              # 样式
-    ├── favicon.ico               # 图标
-    └── red-logo*.png             # Logo
-```
-
-### 不进仓库的文件
-
-| 文件 | 原因 |
-|------|------|
-| `.env` | 含数据库密码、管理员密码、JWT密钥 |
-| `.admin_passwd` | nginx Basic Auth 密码 |
-| `seafile-data/` `seafile-mysql/` `seafile-redis/` | 运行数据 |
+这是唯一入口，没有例外。这样能防止任何一个人改错配置把云盘搞挂。
 
 ---
 
-## 二、协作者加入方式
+## 二、协作者加入
 
 ### 管理员邀请队友
 
 1. 打开 https://github.com/little-ran/hs-cloud-disk/settings/access
-2. 点 **Add people**
-3. 输入队友的 GitHub 用户名
-4. 权限选 **Write**（可编辑推送）
-5. 点 **Add**
+2. 点 **Add people**，输入队友 GitHub 用户名
+3. 权限选 **Write**（可创建分支、提 PR）
+4. 队友收到邮件 → Accept
 
-### 队友接受邀请
+### 队友首次操作
 
-队友会收到邮件，或在 GitHub 通知里看到邀请，点 **Accept** 即可。
+1. 注册 GitHub 账号（如果没有）
+2. 接受邀请邮件
+3. 打开 https://github.com/little-ran/hs-cloud-disk
 
 ---
 
-## 三、协作方式
+## 三、改动流程（所有人必读）
 
-### 方式一：GitHub 网页直接编辑（最简单，无需安装任何工具）
+### 方式一：GitHub 网页操作（无需安装任何工具）
 
-1. 登录 https://github.com/little-ran/hs-cloud-disk
-2. 点进要改的文件（如 `seafile-custom/seafile.nginx.conf`）
+1. 打开 https://github.com/little-ran/hs-cloud-disk
+2. 点进要改的文件
 3. 点右上角 **铅笔图标** ✏️ 编辑
-4. 改完点 **Commit changes**
-5. 填写提交说明，点 **Commit changes** 确认
+4. 修改内容
+5. 提交时选择 **Create a new branch**（不要提交到 main）
+6. 填分支名如 `fix/nginx-cache`，点 **Propose changes**
+7. 在 Pull Request 页面填写说明，点 **Create pull request**
+8. 等待至少1人审查通过后点 **Merge pull request**
 
-> 适合：小改动、改配置、改文案
-
-### 方式二：GitHub Desktop（图形界面，适合不熟命令行的人）
+### 方式二：GitHub Desktop（图形界面）
 
 1. 下载安装 https://desktop.github.com/
-2. 登录 GitHub 账号
-3. Clone 仓库 `little-ran/hs-cloud-disk` 到本地
+2. 登录 GitHub → Clone 仓库到本地
+3. 创建新分支：点 **Current branch** → **New branch** → 命名如 `fix/nginx-cache`
 4. 在本地编辑文件
-5. 在 GitHub Desktop 里写提交说明，点 **Commit to main**
-6. 点 **Push origin** 推送到 GitHub
+5. 写提交说明 → **Commit to fix/nginx-cache**
+6. 点 **Publish branch** 推送
+7. 在 GitHub 网页上会出现 **Compare & pull request** → 点它 → **Create pull request**
+8. 等1人审查通过后 **Merge**
 
-> 适合：批量改文件、需要本地编辑器
-
-### 方式三：命令行（适合开发人员）
+### 方式三：命令行
 
 ```bash
-# 首次克隆
+# 克隆（首次）
 git clone https://github.com/little-ran/hs-cloud-disk.git
 cd hs-cloud-disk
 
+# 创建分支（每次改动前）
+git checkout -b fix/nginx-cache
+
 # 修改文件后提交
 git add -A
-git commit -m "修复：xxx问题"
-git push origin main
-```
+git commit -m "修复：nginx缓存配置"
 
-> 注意：国内访问 GitHub 需开 VPN（见第六节）
+# 推送分支
+git push origin fix/nginx-cache
+
+# 在 GitHub 网页上创建 Pull Request
+# 等审查通过后合并
+```
 
 ---
 
-## 四、修改流程规范
+## 四、分支命名规范
 
-### 谁改什么
+| 前缀 | 用途 | 示例 |
+|------|------|------|
+| `fix/` | Bug修复 | `fix/download-403` |
+| `feat/` | 新功能 | `feat/burn-after-read` |
+| `sync/` | 从服务器同步 | `sync/nginx-config` |
+| `sec/` | 安全加固 | `sec/disable-signup` |
+| `brand/` | 品牌定制 | `brand/help-page` |
+| `clean/` | 清理 | `clean/remove-bak` |
 
-| 角色 | 可改 | 不可改 |
-|------|------|--------|
-| 所有人 | 前端JS、模板HTML、CSS、文案 | .env、密码、密钥 |
-| 运维 | nginx配置、docker-compose、start.py | — |
-| 开发 | seahub_settings.py、中间件 | 生产数据库 |
+---
 
-### 提交信息格式
+## 五、提交信息格式
 
 ```
 <类型>：<简短描述>
 ```
 
-| 类型 | 用途 | 示例 |
-|------|------|------|
-| 修复 | Bug修复 | `修复：下载token缓存失效` |
-| 新增 | 新功能 | `新增：用户登录ID注入` |
-| 同步 | 从服务器同步 | `同步：拉取最新nginx配置` |
-| 安全 | 安全加固 | `安全：关闭注册功能` |
-| 品牌 | 品牌定制 | `品牌：帮助页去除Seafile文案` |
-| 清理 | 删除无用文件 | `清理：删除.bak备份` |
-
-### 改动前必做
-
-1. **先 Pull**：`git pull origin main`（确保拿到最新代码）
-2. **小步提交**：一次改一个功能，不要攒一堆一起提交
-3. **写清楚说明**：提交信息让人一看就知道改了什么
-
-### 改动后必做
-
-1. **Push**：`git push origin main`
-2. **通知团队**：在群里说一声"改了xxx，已推送"
-3. **如涉及服务器**：需要同步到 10.0.124.98 并重启容器
+| 类型 | 示例 |
+|------|------|
+| 修复 | `修复：下载token缓存失效` |
+| 新增 | `新增：用户登录ID注入` |
+| 同步 | `同步：拉取最新nginx配置` |
+| 安全 | `安全：关闭注册功能` |
+| 品牌 | `品牌：帮助页去除Seafile文案` |
+| 清理 | `清理：删除.bak备份` |
 
 ---
 
-## 五、冲突处理
+## 六、PR 审查规范
 
-当两个人同时改了同一个文件：
+### 审查者职责
 
-```bash
-git pull origin main
-# 提示 conflict
+1. **看改动内容**：点 Files changed，逐行看改了什么
+2. **检查安全性**：有没有硬编码密码、有没有删错配置
+3. **检查语法**：nginx 配置语法、Python 语法是否正确
+4. **批准或打回**：点 Review changes → Approve（通过）或 Request changes（打回）
 
-# 打开冲突文件，找到 <<<<<<< 标记
-# 手动选择保留哪部分，删除 <<<<<<< ======= >>>>>>> 标记
+### 合并规则
 
-git add 冲突文件
-git commit -m "合并：解决xxx冲突"
-git push origin main
+- 至少 **1人 Approve** 才能合并
+- 有 Request changes 必须先解决
+- 合并方式选 **Squash and merge**（把多个提交压缩成1个）
+
+### 审查时限
+
+- 普通 PR：24小时内审查
+- 紧急修复（影响线上）：立即审查
+
+---
+
+## 七、仓库结构
+
+```
+hs-cloud-disk/
+├── .gitignore                    # 忽略规则
+├── .env.example                  # 环境变量模板（进仓库，无真实密码）
+├── .env                          # 真实环境变量（gitignore，不进仓库）
+├── docker-compose.yml            # Docker 编排配置
+├── GIT-MANUAL.md                 # 本文档
+└── seafile-custom/               # 所有定制文件
+    ├── seafile.nginx.conf        # nginx 配置
+    ├── start.py                  # 容器启动脚本
+    ├── seahub_settings.py        # seahub 配置
+    ├── seafile.conf              # fileserver 配置
+    ├── react_app.html            # 前端模板
+    ├── *.js                      # 前端注入脚本
+    └── ...                       # 品牌资源
 ```
 
-**避免冲突的原则**：改文件前先 `git pull`，改完尽快 `git push`。
+### 敏感文件保护
+
+| 文件 | 状态 | 说明 |
+|------|------|------|
+| `.env` | gitignore | 含数据库/管理员密码 |
+| `.admin_passwd` | gitignore | nginx Basic Auth |
+| `seahub_settings.py` 里的 SECRET_KEY | 改为环境变量 | `os.environ.get('SEAHUB_SECRET_KEY')` |
+| `docker-compose.yml` 里的密码 | `${}`引用 | 指向 .env，不硬编码 |
 
 ---
 
-## 六、网络与代理（国内访问 GitHub）
+## 八、网络与代理（国内访问 GitHub）
 
-### 需要翻墙的场景
+### 不需要翻墙
+
+- GitHub 网页浏览/编辑/创建PR（浏览器走系统代理即可）
+- 仓库已设为 Public，任何人都能直接访问
+
+### 需要翻墙（Hiddify 端口 12334）
 
 - `git clone` / `git push` / `git pull`（命令行）
 - GitHub Desktop 推送
 
-### 不需要翻墙的场景
-
-- GitHub 网页浏览/编辑（浏览器走系统代理即可）
-- 通过 MCP API 操作
-
-### Hiddify VPN 代理配置
-
 ```bash
-# 设置 git 代理（Hiddify mixed 端口 12334）
 git config http.proxy http://127.0.0.1:12334
 git config https.proxy http://127.0.0.1:12334
-
-# 关闭代理
-git config --unset http.proxy
-git config --unset https.proxy
 ```
 
-### 认证方式
+### 认证（Token）
 
-GitHub 已不支持密码 push，需用 Personal Access Token：
-
-1. 打开 https://github.com/settings/tokens
-2. Generate new token (classic) → 勾选 `repo` → 生成
-3. push 时输入用户名和 token（代替密码）
-4. 或直接在 URL 里带 token（push 后记得清除）
+1. https://github.com/settings/tokens → Generate new token (classic) → 勾选 `repo`
+2. push 时用户名填 GitHub 用户名，密码填 token
 
 ---
 
-## 七、服务器同步
+## 九、服务器同步
 
-代码仓库 ≠ 服务器运行配置。修改仓库后，如需生效到服务器：
-
-```
-GitHub 仓库          本地              服务器 10.0.124.98
-    │                  │                    │
-    │  git pull        │   SCP/SSH 推送     │
-    │ <──────────────  │ ─────────────────> │
-    │                  │                    │
-    │                  │  docker compose    │
-    │                  │  restart seafile   │
-    │                  │ ─────────────────> │
-```
-
-### 从仓库部署到服务器
+代码合并到 main 后，如需部署到服务器：
 
 ```bash
-# 1. 本地拉取最新代码
+# 1. 本地拉取最新
 cd D:/cloud/seafile-docker
 git pull origin main
 
-# 2. 推送到服务器（SCP 或 SSH）
-scp seafile-custom/seafile.nginx.conf vsens@10.0.124.98:~/seafile-deploy/seafile-custom/
+# 2. 推送到服务器
+scp -P 22022 seafile-custom/xxx vsens@10.0.124.98:~/seafile-deploy/seafile-custom/
 
-# 3. 重启容器使配置生效
-ssh vsens@10.0.124.98 -p 22022
+# 3. 重启容器
+ssh -p 22022 vsens@10.0.124.98
 cd ~/seafile-deploy && docker compose restart seafile
 ```
 
-### 从服务器同步到仓库
-
-```bash
-# 1. 从服务器拉取文件到本地
-# （使用同步脚本或手动 SCP）
-
-# 2. 提交到仓库
-git add -A
-git commit -m "同步：从服务器拉取最新配置"
-git push origin main
-```
+> 部署到服务器属于运维操作，仅管理员执行。
 
 ---
 
-## 八、备份与恢复
+## 十、常见问题
 
-### 仓库本身就是备份
+### Q: 为什么不能直接 push 到 main？
+**A**: main 分支已保护。必须走 PR 流程，至少1人审查通过才能合并。这是为了防止误操作。
 
-每次 `git push` 后，代码就备份在 GitHub 上了。即使本地文件丢失，`git clone` 即可恢复。
-
-### 查看历史改动
-
-```bash
-git log --oneline                    # 所有提交历史
-git log --oneline -10                # 最近10条
-git show <commit-hash>               # 查看某次改了什么
-git diff <commit-hash> HEAD          # 对比某次到现在的差异
-```
-
-### 恢复到某个版本
-
-```bash
-# 查看历史，找到要恢复的 commit
-git log --oneline
-
-# 恢复某个文件到指定版本
-git checkout <commit-hash> -- seafile-custom/seafile.nginx.conf
-git commit -m "回退：恢复nginx配置到xxx版本"
-git push origin main
-```
-
----
-
-## 九、常见问题
+### Q: 我是管理员也不能直接 push？
+**A**: 对，分支保护对所有人生效（enforce_admins=false 意味着管理员也受约束）。如需紧急修复，管理员可在 GitHub 网页临时关闭分支保护，改完再开。
 
 ### Q: push 报 "Authentication failed"
-**A**: Token 过期了，去 https://github.com/settings/tokens 重新生成。
+**A**: Token 过期，去 https://github.com/settings/tokens 重新生成。
 
 ### Q: push 报 "SSL/TLS connection failed"
-**A**: VPN 没开或断了，先开 Hiddify VPN 再 push。
-
-### Q: pull 报 "conflict"
-**A**: 两个人改了同一个文件。手动解决冲突（见第五节）。
-
-### Q: 想撤销刚才的提交
-**A**: `git reset HEAD~1`（保留改动）或 `git reset --hard HEAD~1`（丢弃改动）。
+**A**: VPN 没开，先开 Hiddify。
 
 ### Q: 怎么看谁改了什么
-**A**: 在 GitHub 网页点 **Commits**，或 `git log --oneline --graph`。
+**A**: GitHub 网页点 **Commits** 或 **Pull requests**。
 
 ### Q: 新队友怎么加入
-**A**: 管理员在 https://github.com/little-ran/hs-cloud-disk/settings/access 添加。
+**A**: 管理员在 Settings → Access 添加，队友 Accept 邀请后即可提 PR。

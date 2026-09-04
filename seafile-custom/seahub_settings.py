@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-SECRET_KEY = "r$=chz1-k(7*^&euj)a&gsoj^og9jihuh90*du@-2*cbf2gark"
+import os
+SECRET_KEY = os.environ.get('SEAHUB_SECRET_KEY', 'change-me-in-production')
 
 TIME_ZONE = 'Asia/Shanghai'
 

@@ -1,0 +1,179 @@
+{% extends "base_for_react.html" %}
+{% load seahub_tags i18n %}
+{% load render_bundle from webpack_loader %}
+
+{% block extra_style %}
+<style>
+  a[href*="migrate_ce_to_pro"],
+  a[href*="manual.seafile.com"] { display: none !important; }
+  /* 预隐藏系统信息-社区版区块，避免闪烁 */
+  [class*="community"],
+  [class*="Community"] { display: none !important; }
+</style>
+{% endblock %}
+
+{% block extra_script %}
+<script type="text/javascript">
+        window.sysadmin = {
+                config: {},
+                pageOptions: {
+                        constance_enabled: {% if constance_enabled %} true {% else %} false {% endif %},
+                        multi_tenancy: {% if multi_tenancy %} true {% else %} false {% endif %},
+                        multi_institution: {% if multi_institution %} true {% else %} false {% endif %},
+      institutions: (function() {
+        var list = [''];
+        {% for inst in institutions %}
+        list.push('{{inst|escapejs}}');
+        {% endfor %}
+        return list;
+      })(),
+                        sysadmin_extra_enabled: {% if sysadmin_extra_enabled %} true {% else %} false {% endif %},
+                        enable_guest_invitation: {% if enable_guest_invitation %} true {% else %} false {% endif %},
+                        enable_terms_and_conditions: {% if enable_terms_and_conditions %} true {% else %} false {% endif %},
+                        is_default_admin: {% if is_default_admin %} true {% else %} false {% endif %},
+      enable_file_scan: {% if enable_file_scan %} true {% else %} false {% endif %},
+      enable_work_weixin: {% if enable_work_weixin %} true {% else %} false {% endif %},
+      enable_dingtalk: {% if enable_dingtalk %} true {% else %} false {% endif %},
+      enableSysAdminViewRepo: {% if enable_sys_admin_view_repo %} true {% else %} false {% endif %},
+      trashReposExpireDays: {{ trash_repos_expire_days }},
+      send_email_on_adding_system_member: {% if send_email_on_adding_system_member %} true {% else %} false {% endif %},
+      twoFactorAuthEnabled: {% if two_factor_auth_enabled %} true {% else %} false {% endif %},
+      availableRoles: (function() {
+        var list = [];
+        {% for role in available_roles %}
+        list.push('{{role|escapejs}}');
+        {% endfor %}
+        return list;
+      })(),
+      availableAdminRoles: (function() {
+        var list = [];
+        {% for role in available_admin_roles %}
+        list.push('{{role|escapejs}}');
+        {% endfor %}
+        return list;
+      })(),
+      haveLDAP: {% if have_ldap %} true {% else %} false {% endif %},
+      enable_share_link_report_abuse: {% if enable_share_link_report_abuse %} true {% else %} false {% endif %},
+                        admin_permissions: {
+        "can_view_system_info": {% if user.admin_permissions.can_view_system_info %} true {% else %} false {% endif %},
+        "can_view_statistic": {% if user.admin_permissions.can_view_statistic %} true {% else %} false {% endif %},
+        "can_config_system": {% if user.admin_permissions.can_config_system %} true {% else %} false {% endif %},
+        "can_manage_library": {% if user.admin_permissions.can_manage_library %} true {% else %} false {% endif %},
+        "can_manage_user": {% if user.admin_permissions.can_manage_user %} true {% else %} false {% endif %},
+        "can_manage_group": {% if user.admin_permissions.can_manage_group %} true {% else %} false {% endif %},
+        "can_view_user_log": {% if user.admin_permissions.can_view_user_log %} true {% else %} false {% endif %},
+        "can_view_admin_log": {% if user.admin_permissions.can_view_admin_log %} true {% else %} false {% endif %},
+        "other_permission": {% if user.admin_permissions.other_permission %} true {% else %} false {% endif %},
+                        }
+                }
+        };
+</script>
+{% render_bundle 'sysAdmin' %}
+<script src="/media/custom/user-loginid-inject.js?v=20260826v2"></script>
+<script>
+(function () {
+  'use strict';
+  // 升级到专业版外链特征
+  var PRO_HREF_FRAGMENTS = ['migrate_ce_to_pro', 'manual.seafile.com'];
+  // 侧边栏菜单文本（包含匹配）
+  var MENU_TEXTS = ['系统信息', 'Info', 'System Info'];
+  // 系统信息页内“社区版 / 升级到专业版”区块文本
+  var BLOCK_TEXTS = ['社区版', '社区版本', 'Community Edition', 'Community', '升级到专业版', 'Upgrade to Pro'];
+
+  function norm(s) { return (s || '').trim(); }
+
+  function isProLink(el) {
+    var href = (el.getAttribute && el.getAttribute('href') || '').toLowerCase();
+    for (var i = 0; i < PRO_HREF_FRAGMENTS.length; i++) {
+      if (href.indexOf(PRO_HREF_FRAGMENTS[i].toLowerCase()) !== -1) return true;
+    }
+    return false;
+  }
+  function textHas(arr, txt) {
+    for (var i = 0; i < arr.length; i++) {
+      if (txt.indexOf(arr[i]) !== -1) return true;
+    }
+    return false;
+  }
+  function isInfoMenu(el) {
+    var txt = norm(el.textContent);
+    return !!txt && textHas(MENU_TEXTS, txt);
+  }
+  function isCommunityBlock(el) {
+    var txt = norm(el.textContent);
+    return !!txt && textHas(BLOCK_TEXTS, txt);
+  }
+
+  // 仅隐藏菜单项本身（li / a），绝不向上吞主内容
+  function hideMenuNode(node, scope) {
+    var candidate = node;
+    while (candidate && candidate !== document.body) {
+      if (scope && !scope.contains(candidate)) break;
+      if (candidate.tagName === 'LI' || candidate.tagName === 'A') {
+        candidate.style.display = 'none';
+        candidate.setAttribute('data-hidden-by-pro', '1');
+        return;
+      }
+      candidate = candidate.parentNode;
+    }
+    node.style.display = 'none';
+  }
+
+  // 隐藏“社区版”卡片：只向上找明确的卡片类容器，绝不碰 content/container/wrapper
+  function hideCard(node) {
+    var candidate = node;
+    while (candidate && candidate !== document.body) {
+      var cls = (candidate.className || '').toString();
+      var tag = candidate.tagName;
+      if (/card|panel|section|box|block/i.test(cls) || tag === 'SECTION' || tag === 'ARTICLE') {
+        candidate.style.display = 'none';
+        candidate.setAttribute('data-hidden-by-pro', '1');
+        return;
+      }
+      candidate = candidate.parentNode;
+    }
+    node.style.display = 'none';
+  }
+
+  function scan() {
+    // 1) 升级到专业版外链（仅隐藏该 <a>）
+    document.querySelectorAll('a[href]').forEach(function (a) {
+      if (isProLink(a)) a.style.display = 'none';
+    });
+    // 2) 侧边栏“系统信息 / Info”菜单项（只在侧边栏内，隐藏 li/a 本身）
+    document.querySelectorAll('.side-panel, .sysadmin-side-panel, nav').forEach(function (panel) {
+      panel.querySelectorAll('li, a, [role="menuitem"], .nav-item').forEach(function (node) {
+        if (isInfoMenu(node)) hideMenuNode(node, panel);
+      });
+    });
+    // 3) 系统信息页内的“社区版”卡片（只藏卡片本身）
+    document.querySelectorAll('h1,h2,h3,h4,h5,.title,.heading,[class*="title"],[class*="heading"]').forEach(function (node) {
+      if (isCommunityBlock(node)) hideCard(node);
+    });
+    // 4) 直接含“升级到专业版/Upgrade to Pro”文本的按钮
+    document.querySelectorAll('button,.btn').forEach(function (node) {
+      var t = norm(node.textContent);
+      if (t.indexOf('升级到专业版') !== -1 || t.indexOf('Upgrade to Pro') !== -1) hideCard(node);
+    });
+  }
+
+  scan();
+  if (window.MutationObserver) {
+    var mo = new MutationObserver(function (mutations) {
+      var need = false;
+      for (var i = 0; i < mutations.length; i++) {
+        if (mutations[i].addedNodes && mutations[i].addedNodes.length) { need = true; break; }
+      }
+      if (need) scan();
+    });
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+  } else {
+    setInterval(scan, 500);
+  }
+  var lastHref = location.href;
+  setInterval(function () {
+    if (location.href !== lastHref) { lastHref = location.href; setTimeout(scan, 200); }
+  }, 800);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,26 @@
+# 敏感文件（密码/密钥）
+.env
+.admin_passwd
+seafile-custom/.admin_passwd
+
+# 数据目录（不进仓库）
+seafile-data/
+seafile-mysql/
+seafile-redis/
+minio/
+minio-b-host/
+
+# 大文件 / 二进制
+*.zip
+*.tar
+*.tar.gz
+
+# 系统文件
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+
+# 备份文件
+*.bak
+*.bak_*

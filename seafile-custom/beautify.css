@@ -1,0 +1,63 @@
+/* ============================================================
+   Seafile 自定义 UI 美化（由 BRANDING_CSS 注入）
+   目标：替换品牌 logo + 美化“收起侧边栏”按钮
+   ============================================================ */
+
+/* 1) 品牌 logo：约束高度，避免自定义图过大 */
+.top-logo img,
+#logo {
+  height: 34px !important;
+  width: auto !important;
+  max-width: 180px;
+  object-fit: contain;
+}
+
+/* 2) 收起侧边栏按钮（桌面端底部 .side-nav-bottom-toolbar） */
+.side-nav-bottom-toolbar {
+  border: 1px solid #e7e7ef;
+  background: #ffffff;
+  border-radius: 10px !important;
+  padding: 7px 12px !important;
+  color: #3a3a46 !important;
+  font-weight: 600;
+  letter-spacing: .2px;
+  box-shadow: 0 1px 2px rgba(20, 20, 40, .05);
+  transition: background .18s ease, border-color .18s ease,
+              box-shadow .18s ease, transform .18s ease;
+  cursor: pointer;
+}
+.side-nav-bottom-toolbar:hover {
+  background: #f5f6fb;
+  border-color: #d6d7e6;
+  box-shadow: 0 4px 14px rgba(193, 40, 30, .14);
+  transform: translateY(-1px);
+}
+.side-nav-bottom-toolbar:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(20, 20, 40, .05);
+}
+
+/* 隐藏默认 close-sidebar 图标，改用红色 logo 作为按钮图标 */
+.side-nav-bottom-toolbar svg {
+  display: none !important;
+}
+.side-nav-bottom-toolbar::before {
+  content: "";
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  margin-right: 4px;
+  display: inline-block;
+  background: url(/media/seafile-custom/red-logo.png) center / contain no-repeat;
+}
+
+/* 3) 移动端菜单按钮（.side-nav-toggle）统一红色调 */
+.side-nav-toggle {
+  color: #c1281e !important;
+  font-size: 1.4rem;
+  transition: transform .18s ease, color .18s ease;
+}
+.side-nav-toggle:hover {
+  color: #9e1a12 !important;
+  transform: scale(1.08);
+}

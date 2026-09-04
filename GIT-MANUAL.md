@@ -161,24 +161,13 @@ hs-cloud-disk/
 
 ---
 
-## 八、网络与代理（国内访问 GitHub）
+## 八、网络与认证
 
-### 不需要翻墙
-
-- GitHub 网页浏览/编辑/创建PR（浏览器走系统代理即可）
-- 仓库已设为 Public，任何人都能直接访问
-
-### 需要翻墙（Hiddify 端口 12334）
-
-- `git clone` / `git push` / `git pull`（命令行）
-- GitHub Desktop 推送
-
-```bash
-git config http.proxy http://127.0.0.1:12334
-git config https.proxy http://127.0.0.1:12334
-```
+> 国内访问 GitHub 可能需要挂代理，请自行解决网络问题。GitHub 网页操作通常无需额外配置，命令行 push/pull 如遇连接失败请检查网络。
 
 ### 认证（Token）
+
+GitHub 不支持密码 push，需用 Personal Access Token：
 
 1. https://github.com/settings/tokens → Generate new token (classic) → 勾选 `repo`
 2. push 时用户名填 GitHub 用户名，密码填 token
@@ -218,7 +207,7 @@ cd ~/seafile-deploy && docker compose restart seafile
 **A**: Token 过期，去 https://github.com/settings/tokens 重新生成。
 
 ### Q: push 报 "SSL/TLS connection failed"
-**A**: VPN 没开，先开 Hiddify。
+**A**: 网络问题，可能需要挂代理访问 GitHub。
 
 ### Q: 怎么看谁改了什么
 **A**: GitHub 网页点 **Commits** 或 **Pull requests**。
